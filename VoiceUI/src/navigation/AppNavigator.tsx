@@ -2,10 +2,12 @@ import React, { useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { RootStackParamList } from '../../types';
-import { Button, View, Text, StyleSheet } from 'react-native';
 import { DEV_INITIAL_ROUTE as ENV_ROUTE } from '@env';
 
+// Import screens
+import HomeScreen1 from '../screens/HomeScreens/HomeScreen1';
 import ChatScreen from '../screens/ChatScreen/ChatScreen';
+import ChatScreen2 from '../screens/ChatScreen/ChatScreen2'; // Import the new ChatScreen2
 import VoiceScreen1 from '../screens/VoiceScreens/VoiceScreen1';
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -15,44 +17,34 @@ const DEV_INITIAL_ROUTE = process.env.NODE_ENV === 'development' ? ENV_ROUTE : n
 
 console.log('DEV_INITIAL_ROUTE:', DEV_INITIAL_ROUTE);
 
-const HomeScreen = ({ navigation }: any) => {
-  // Automatically navigate based on DEV_INITIAL_ROUTE
+// Auto-Navigation Wrapper for HomeScreen1
+const AutoNavigationHomeScreen = ({ navigation }: any) => {
   useEffect(() => {
-    if (DEV_INITIAL_ROUTE === 'Chat') {
-      navigation.navigate('Chat');
-    } else if (DEV_INITIAL_ROUTE === 'Voice1') {
-      navigation.navigate('Voice1');
+    if (DEV_INITIAL_ROUTE !== '' && DEV_INITIAL_ROUTE !== null) {
+      navigation.navigate(DEV_INITIAL_ROUTE);
     }
   }, [navigation]);
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Home Screen</Text>
-      <Button
-        title="Go to Chat"
-        onPress={() => navigation.navigate('Chat')}
-      />
-      <Button
-        title="Go to Voice Mode 1"
-        onPress={() => navigation.navigate('Voice1')}
-      />
-    </View>
-  );
+  return <HomeScreen1 navigation={navigation} />;
 };
 
 const AppNavigator = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="Home"
+        screenOptions={{
+          cardStyle: { flex: 1 },
+        }}>
         {/* Home Screen */}
         <Stack.Screen
           name="Home"
-          component={HomeScreen}
+          component={AutoNavigationHomeScreen}
           options={{
             headerTitle: 'Home',
             headerTitleAlign: 'center',
           }}
         />
+
         {/* Chat Screen */}
         <Stack.Screen
           name="Chat"
@@ -62,6 +54,16 @@ const AppNavigator = () => {
             headerTitleAlign: 'center',
           }}
         />
+
+        {/* Chat Screen 2 */}
+        <Stack.Screen
+          name="ChatScreen2" // Add the new screen to the navigator
+          component={ChatScreen2} // Reference the ChatScreen2 component
+          options={{
+            headerShown: false, // Disable the default header for better control
+          }}
+        />
+
         {/* Voice Screen 1 */}
         <Stack.Screen
           name="Voice1"
@@ -75,17 +77,5 @@ const AppNavigator = () => {
     </NavigationContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 24,
-    marginBottom: 20,
-  },
-});
 
 export default AppNavigator;

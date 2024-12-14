@@ -1,22 +1,40 @@
 import React, { useState, useRef } from 'react';
 import {
   View,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
+  Text,
   FlatList,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Animated,
 } from 'react-native';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import ChatBubble from '../../components/chat/ChatBubble'; // Import the ChatBubble component
 import { RootStackParamList } from '../../../types';
 
-const ChatScreen = () => {
-  const [messages, setMessages] = useState([
-    { id: '1', type: 'agent', text: 'Hello! How can I help you?' },
-    { id: '2', type: 'user', text: 'I have a question about my order.' },
+type Message = {
+  id: string;
+  type: 'user' | 'agent';
+  text: string;
+  animation: Animated.Value;
+};
+
+const ChatScreen2 = () => {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      type: 'agent',
+      text: 'Hello! How can I help you?',
+      animation: new Animated.Value(0),
+    },
+    {
+      id: '2',
+      type: 'user',
+      text: 'I have a question about my order.',
+      animation: new Animated.Value(0),
+    },
   ]);
   const [input, setInput] = useState('');
   const flatListRef = useRef<FlatList>(null);
@@ -25,16 +43,34 @@ const ChatScreen = () => {
 
   const sendMessage = () => {
     if (input.trim() !== '') {
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: Date.now().toString(), type: 'user', text: input },
-      ]);
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        type: 'user',
+        text: input,
+        animation: new Animated.Value(0),
+      };
+
+      setMessages((prevMessages) => {
+        const updatedMessages = [...prevMessages, newMessage];
+        setTimeout(() => {
+          flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
+          inputRef.current?.focus();
+        }, 100);
+        return updatedMessages;
+      });
+
+      setTimeout(() => animateMessage(newMessage.animation), 100);
+
       setInput('');
-      setTimeout(() => {
-        inputRef.current?.focus();
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
     }
+  };
+
+  const animateMessage = (animation: Animated.Value) => {
+    Animated.timing(animation, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
   };
 
   return (
@@ -42,16 +78,44 @@ const ChatScreen = () => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      {/* Chat Bubbles */}
+      {/* Chat Messages */}
       <FlatList
         ref={flatListRef}
-        data={messages}
+        data={[...messages].reverse()}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ChatBubble type={item.type} text={item.text} />}
+        renderItem={({ item }) => (
+          <Animated.View
+            style={[
+              styles.chatBubble,
+              item.type === 'user' ? styles.chatBubbleUser : styles.chatBubbleAgent,
+              {
+                opacity: item.animation,
+                transform: [
+                  {
+                    scale: item.animation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.9, 1], // Scale from 90% to 100%
+                    }),
+                  },
+                  {
+                    translateY: item.animation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [10, 0], // Slight upward motion
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <Text style={styles.chatText}>{item.text}</Text>
+          </Animated.View>
+        )}
         contentContainerStyle={styles.chatContainer}
+        inverted
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
 
-      {/* Input Field and Mic Icon */}
+      {/* Input Field and Icons */}
       <View style={styles.inputWrapper}>
         <TextInput
           ref={inputRef}
@@ -61,6 +125,7 @@ const ChatScreen = () => {
           onChangeText={setInput}
           onSubmitEditing={sendMessage}
           returnKeyType="send"
+          blurOnSubmit={false}
         />
         <TouchableOpacity style={styles.iconButton} onPress={sendMessage}>
           <Icon name="send" size={20} color="#fff" />
@@ -82,9 +147,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f5',
   },
   chatContainer: {
-    flexGrow: 1,
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
+    padding: 10,
+  },
+  chatBubble: {
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 5,
+    maxWidth: '75%',
+  },
+  chatBubbleUser: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#d1f5d3',
+  },
+  chatBubbleAgent: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#e2e2e2',
+  },
+  chatText: {
+    fontSize: 16,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -101,6 +181,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 5,
     paddingHorizontal: 10,
+    marginRight: 10,
     backgroundColor: '#fff',
   },
   iconButton: {
@@ -114,4 +195,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ChatScreen;
+export default ChatScreen2;
