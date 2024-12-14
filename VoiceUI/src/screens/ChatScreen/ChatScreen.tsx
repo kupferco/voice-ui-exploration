@@ -13,6 +13,8 @@ import {
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { RootStackParamList } from '../../../types';
+import TypingIndicator from '../../components/chat/TypingIndicator';
+import ApiRouter from '../../services/ApiRouter';
 
 type Message = {
   id: string;
@@ -29,39 +31,55 @@ const ChatScreen2 = () => {
       text: 'Hello! How can I help you?',
       animation: new Animated.Value(0),
     },
-    {
-      id: '2',
-      type: 'user',
-      text: 'I have a question about my order.',
-      animation: new Animated.Value(0),
-    },
   ]);
   const [input, setInput] = useState('');
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const [isTyping, setIsTyping] = useState(false);
 
   const sendMessage = () => {
     if (input.trim() !== '') {
-      const newMessage: Message = {
+      // Add user's message immediately
+      const userMessage: Message = {
         id: Date.now().toString(),
         type: 'user',
         text: input,
         animation: new Animated.Value(0),
       };
 
-      setMessages((prevMessages) => {
-        const updatedMessages = [...prevMessages, newMessage];
-        setTimeout(() => {
-          flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
-          inputRef.current?.focus();
-        }, 100);
-        return updatedMessages;
-      });
-
-      setTimeout(() => animateMessage(newMessage.animation), 100);
-
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+      animateMessage(userMessage.animation);
       setInput('');
+      inputRef.current?.focus();
+
+      // Show typing indicator while waiting for a response
+      setIsTyping(true);
+      ApiRouter.sendMessage(input)
+        .then((response) => {
+          setIsTyping(false);
+          const agentMessage: Message = {
+            id: Date.now().toString(),
+            type: 'agent',
+            text: response,
+            animation: new Animated.Value(0),
+          };
+
+          setMessages((prevMessages) => [...prevMessages, agentMessage]);
+          animateMessage(agentMessage.animation);
+        })
+        .catch(() => {
+          setIsTyping(false);
+          const errorMessage: Message = {
+            id: Date.now().toString(),
+            type: 'agent',
+            text: 'Oops! Something went wrong.',
+            animation: new Animated.Value(0),
+          };
+
+          setMessages((prevMessages) => [...prevMessages, errorMessage]);
+          animateMessage(errorMessage.animation);
+        });
     }
   };
 
@@ -94,13 +112,13 @@ const ChatScreen2 = () => {
                   {
                     scale: item.animation.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0.9, 1], // Scale from 90% to 100%
+                      outputRange: [0.9, 1],
                     }),
                   },
                   {
                     translateY: item.animation.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [10, 0], // Slight upward motion
+                      outputRange: [10, 0],
                     }),
                   },
                 ],
@@ -112,8 +130,11 @@ const ChatScreen2 = () => {
         )}
         contentContainerStyle={styles.chatContainer}
         inverted
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+        onContentSizeChange={() => flatListRef.current?.scrollToIndex({ index: 0 })}
       />
+
+      {/* Typing Indicator */}
+      {isTyping && <TypingIndicator />}
 
       {/* Input Field and Icons */}
       <View style={styles.inputWrapper}>

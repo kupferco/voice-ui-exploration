@@ -7,7 +7,13 @@ class MockService {
             "Simulated response for testing purposes.",
         ];
         const randomIndex = Math.floor(Math.random() * responses.length);
-        return responses[randomIndex];
+        const randomDelay = Math.random() * 2000 + 1000; // Delay between 1 and 3 seconds
+
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve(responses[randomIndex]);
+            }, randomDelay);
+        });
     }
 }
 
