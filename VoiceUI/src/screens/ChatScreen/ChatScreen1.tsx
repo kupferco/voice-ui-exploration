@@ -33,8 +33,17 @@ const ChatScreen1 = () => {
   const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
+    // Load existing messages from ConversationHandler on screen entry
+    const existingMessages = ConversationHandler.getMessages();
+    setMessages(
+      existingMessages.map((msg) => ({
+        ...msg,
+        animation: new Animated.Value(1), // Set initial animation state
+      }))
+    );
+
+    // Subscribe to updates
     const updateMessages = (updatedMessages: any[]) => {
-      console.log('Updated Messages in ChatScreen1:', updatedMessages); // Debugging line
       setMessages(
         updatedMessages.map((msg) => ({
           ...msg,
@@ -44,8 +53,12 @@ const ChatScreen1 = () => {
     };
 
     ConversationHandler.subscribe(updateMessages);
-    return () => ConversationHandler.unsubscribe(updateMessages);
+
+    return () => {
+      ConversationHandler.unsubscribe(updateMessages); // Cleanup on unmount
+    };
   }, []);
+
 
 
   const sendMessage = async () => {

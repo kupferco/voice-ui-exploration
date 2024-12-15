@@ -36,10 +36,28 @@ const VoiceScreen1 = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold' },
-  status: { fontSize: 18, marginBottom: 10 },
-  recognizedText: { fontSize: 18, marginVertical: 20 },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff'
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold'
+  },
+  status: {
+
+    fontSize: 18,
+    marginBottom: 10
+  },
+  recognizedText: {
+    fontSize: 18,
+    color: '#333',
+    paddingHorizontal: 20, // Add padding to the left and right
+    marginBottom: 20,      // Keep spacing below the text
+  },
+
   muteButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -48,7 +66,11 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
   },
-  buttonText: { marginLeft: 10, fontSize: 18, color: '#fff' },
+  buttonText: {
+    marginLeft: 10,
+    fontSize: 18,
+    color: '#fff'
+  },
 });
 
 export default VoiceScreen1;

@@ -2,25 +2,33 @@ import React, { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
 type MicHandlerProps = {
-  onSpeechResult: (text: string) => void;
-  isMuted: boolean;
-  onError?: (error: string) => void;
+  onSpeechResult: (text: string) => void; // Callback when final transcript is ready
+  isMuted: boolean; // Mute or unmute the mic
+  onError?: (error: string) => void; // Optional error callback
+  pauseDelay?: number; // Optional configurable pause duration (ms)
 };
 
-const MicHandler: React.FC<MicHandlerProps> = ({ onSpeechResult, isMuted, onError }) => {
+const MicHandler: React.FC<MicHandlerProps> = ({
+  onSpeechResult,
+  isMuted,
+  onError,
+  pauseDelay = 500, // Default pause duration to 500ms
+}) => {
   const recognitionRef = useRef<any>(null);
+  const finalTranscriptRef = useRef(''); // Store the final transcript
+  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (Platform.OS === 'web') {
       setupWebSpeechRecognition();
-    } else {
-      console.warn('MicHandler: Unsupported platform for this configuration.');
     }
 
+    // Cleanup recognition and timers on unmount
     return () => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
+      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
     };
   }, [isMuted]);
 
@@ -32,18 +40,34 @@ const MicHandler: React.FC<MicHandlerProps> = ({ onSpeechResult, isMuted, onErro
 
     const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.continuous = true; // Continuously listen for speech
+    recognition.interimResults = true; // Receive interim speech results
+    recognition.lang = 'en-US'; // Set language to English
     recognitionRef.current = recognition;
 
     recognition.onresult = (event: any) => {
-      if (isMuted) return;
+      if (isMuted) return; // Don't process if mic is muted
 
-      const transcript = Array.from(event.results)
-        .map((result) => result[0].transcript)
-        .join(' ');
-      onSpeechResult(transcript);
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscriptRef.current += transcript; // Append to final transcript
+        } else {
+          interimTranscript += transcript; // Collect interim transcript
+        }
+      }
+
+      // Reset pause timer
+      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+
+      // Detect pause and send final message
+      pauseTimeoutRef.current = setTimeout(() => {
+        if (finalTranscriptRef.current.trim() !== '') {
+          onSpeechResult(finalTranscriptRef.current.trim()); // Send only when paused
+          finalTranscriptRef.current = ''; // Reset final transcript
+        }
+      }, pauseDelay);
     };
 
     recognition.onerror = (event: any) => {
@@ -51,7 +75,7 @@ const MicHandler: React.FC<MicHandlerProps> = ({ onSpeechResult, isMuted, onErro
       if (onError) onError(event.error);
     };
 
-    recognition.start();
+    recognition.start(); // Start recognition
   };
 
   return null; // No UI needed for this component
