@@ -8,8 +8,9 @@ class ApiRouter {
     switch (API_SERVICE) {
       case 'MOCK':
         return MockService.sendMessage(message);
-      case 'GEMINI':
-        return GeminiService.sendMessage(message);
+        case 'GEMINI':
+        return MockService.sendMessage(message);
+        // return GeminiService.sendMessage(message);
       case 'PROXY':
         return ProxyService.sendMessage(message);
       default:

@@ -1,6 +1,6 @@
 // src/components/chat/TypingIndicator.tsx
 import React, { useRef, useEffect } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
+import { View, Text, Animated, StyleSheet, Platform } from 'react-native';
 
 const TypingIndicator = () => {
   const dot1 = useRef(new Animated.Value(0)).current;
@@ -14,12 +14,12 @@ const TypingIndicator = () => {
           toValue: 1,
           duration: 300,
           delay,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web', // Native driver disabled on web
         }),
         Animated.timing(dot, {
           toValue: 0,
           duration: 300,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ])
     ).start();

@@ -9,7 +9,7 @@ class GeminiService {
   private static conversationHistory: ChatEntry[] = [
     {
       role: 'system',
-      text: `You are a helpful and concise AI assistant. Your responses should be short, informative, and avoid unnecessary details.`,
+      text: `You are a helpful and concise AI assistant. But not too concise though. Answers can have up to three lines if needed. In general, should have more than 10 words. Your responses should be informative, and avoid unnecessary details.`,
     },
   ];
 

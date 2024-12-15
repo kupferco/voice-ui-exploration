@@ -6,7 +6,7 @@ import { DEV_INITIAL_ROUTE as ENV_ROUTE } from '@env';
 
 // Import screens
 import HomeScreen1 from '../screens/HomeScreens/HomeScreen1';
-import ChatScreen from '../screens/ChatScreen/ChatScreen';
+import ChatScreen from '../screens/ChatScreen/ChatScreen1';
 import ChatScreen2 from '../screens/ChatScreen/ChatScreen2'; // Import the new ChatScreen2
 import VoiceScreen1 from '../screens/VoiceScreens/VoiceScreen1';
 
