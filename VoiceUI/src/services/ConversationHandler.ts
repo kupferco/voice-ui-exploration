@@ -30,23 +30,25 @@ class ConversationHandler {
 
 
     // Send Message to API and Add Responses
-    public async sendMessage(input: string): Promise<void> {
+    public async sendMessage(input: string): Promise<string> {
         const userMessage: Message = { id: Date.now().toString(), type: 'user', text: input };
         this.addMessage(userMessage);
-
+    
         try {
-            const response = await ApiRouter.sendMessage(input); // Use ApiRouter here
+            const response = await ApiRouter.sendMessage(input); // Fetch response
             const agentMessage: Message = { id: Date.now().toString(), type: 'agent', text: response };
             this.addMessage(agentMessage);
+    
+            return response; // Return the agent's response as a string
         } catch (error) {
-            const errorMessage: Message = {
-                id: Date.now().toString(),
-                type: 'agent',
-                text: 'Error: Could not process the request.',
-            };
-            this.addMessage(errorMessage);
+            const errorMessage = 'Error: Could not process the request.';
+            const agentMessage: Message = { id: Date.now().toString(), type: 'agent', text: errorMessage };
+            this.addMessage(agentMessage);
+    
+            return errorMessage; // Return the error message as a string
         }
     }
+    
 
     // Get All Messages
     public getMessages(): Message[] {

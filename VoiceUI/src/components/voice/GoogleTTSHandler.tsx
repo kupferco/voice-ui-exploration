@@ -1,8 +1,9 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useState } from 'react';
 import { GOOGLE_API_KEY } from '@env';
 
 export type TTSHandlerRef = {
   interruptPlayback: () => void; // Method to interrupt playback
+  isTTSPlaying: boolean; // Tracks whether TTS is playing
 };
 
 type TTSHandlerProps = {
@@ -16,27 +17,29 @@ type TTSHandlerProps = {
 const TTSHandler = forwardRef<TTSHandlerRef, TTSHandlerProps>(
   ({ text, isEnabled, onTTSStart, onTTSEnd, onError }, ref) => {
     const audioRef = useRef<HTMLAudioElement | null>(null);
-    const isPlaying = useRef(false);
+    const [isTTSPlaying, setIsTTSPlaying] = useState(false);
 
     useImperativeHandle(ref, () => ({
       interruptPlayback: () => {
         if (audioRef.current) {
           audioRef.current.pause();
           audioRef.current.currentTime = 0;
-          isPlaying.current = false;
+          setIsTTSPlaying(false);
         }
-        window.speechSynthesis.cancel(); // Cancel speech synthesis (if used)
       },
+      isTTSPlaying,
     }));
 
     useEffect(() => {
+      // console.log('111 === TTSHandler UseEffect called')
       if (!isEnabled || !text) return;
+      // console.log('222 ==== Text updated :: TTS happening')
 
       const playTTS = async () => {
         try {
           onTTSStart?.();
+          setIsTTSPlaying(true);
 
-          // Prepare the request to Google TTS API
           const requestBody = {
             input: { text },
             voice: { languageCode: 'en-US', ssmlGender: 'NEUTRAL' },
@@ -55,14 +58,12 @@ const TTSHandler = forwardRef<TTSHandlerRef, TTSHandlerProps>(
           const data = await response.json();
 
           if (data.audioContent) {
-            // Play the audio
             const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
             audioRef.current = audio;
-            isPlaying.current = true;
 
             audio.play();
             audio.onended = () => {
-              isPlaying.current = false;
+              setIsTTSPlaying(false);
               onTTSEnd?.();
             };
           } else {
@@ -70,6 +71,8 @@ const TTSHandler = forwardRef<TTSHandlerRef, TTSHandlerProps>(
           }
         } catch (error: any) {
           console.error('TTS Error:', error);
+          setIsTTSPlaying(false);
+          onTTSEnd?.();
           onError?.(error.message || 'An error occurred during TTS playback.');
         }
       };
@@ -79,13 +82,12 @@ const TTSHandler = forwardRef<TTSHandlerRef, TTSHandlerProps>(
       return () => {
         if (audioRef.current) {
           audioRef.current.pause();
-          isPlaying.current = false;
+          setIsTTSPlaying(false);
         }
-        window.speechSynthesis.cancel(); // Ensure playback is stopped on cleanup
       };
     }, [text, isEnabled]);
 
-    return null; // No UI needed
+    return null;
   }
 );
 
