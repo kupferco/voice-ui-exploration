@@ -16,9 +16,8 @@
     "@grpc/grpc-js": "^1.12.4",
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.0",
-    "expo": "~52.0.18",
     "expo-status-bar": "~2.0.0",
-    "proxy-assistant-sdk": "file:proxy-assistant-sdk-1.0.0.tgz",
+    "proxy-assistant-sdk": "file:../../proxy-assistant-sdk/proxy-assistant-sdk-1.0.0.tgz",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.5",
@@ -34,9 +33,13 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
+    "@babel/plugin-transform-runtime": "^7.25.9",
+    "@babel/preset-env": "^7.26.0",
+    "@babel/preset-react": "^7.26.3",
     "@types/dom-speech-recognition": "^0.0.4",
     "@types/react": "^18.3.16",
     "@types/react-native": "^0.72.8",
+    "expo": "^52.0.25",
     "typescript": "^5.7.2"
   },
   "expo": {

@@ -1,21 +1,27 @@
+import { Config, GeminiService, SessionManager } from 'proxy-assistant-sdk';
+
 class ProxyService {
+    private static geminiService = new GeminiService();
+
+    // Ensure the configuration is initialized
+    static initialiseConfig() {
+        Config.setApiBaseUrl(Config.getApiBaseUrl());
+    }
+
     static async sendMessage(message: string): Promise<string> {
-        const url = 'https://your-proxy-server.com/api/chat'; // Replace with your proxy server URL
+        try {
+            // Ensure session is initialized
+            const sessionId = SessionManager.getSessionId();
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ message }),
-        });
+            // Use the GeminiService to send the message
+            const response = await this.geminiService.sendRestMessage(sessionId, message);
 
-        if (!response.ok) {
-            throw new Error(`Proxy Server Error: ${response.statusText}`);
+            // Return the assistant's reply
+            return response || 'No response from Gemini Service';
+        } catch (error) {
+            console.error('Error in ProxyService sendMessage:', error);
+            throw new Error('Failed to send message through Gemini Service.');
         }
-
-        const data = await response.json();
-        return data.reply || 'No response from Proxy Server';
     }
 }
 

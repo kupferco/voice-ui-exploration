@@ -5,7 +5,7 @@ type ChatEntry = {
   text: string;
 };
 
-class GeminiService {
+class GeminiServiceClient {
   private static conversationHistory: ChatEntry[] = [
     {
       role: 'system',
@@ -86,4 +86,4 @@ class GeminiService {
   }
 }
 
-export default GeminiService;
+export default GeminiServiceClient;

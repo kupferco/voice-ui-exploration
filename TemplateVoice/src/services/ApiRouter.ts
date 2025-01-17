@@ -1,5 +1,5 @@
 import MockService from './MockService';
-import GeminiService from './GeminiService';
+import GeminiServiceClient from './GeminiServiceClient';
 import ProxyService from './ProxyService';
 import { API_SERVICE } from '@env';
 
@@ -9,8 +9,7 @@ class ApiRouter {
       case 'MOCK':
         return MockService.sendMessage(message);
         case 'GEMINI':
-        return MockService.sendMessage(message);
-        // return GeminiService.sendMessage(message);
+        return GeminiServiceClient.sendMessage(message);
       case 'PROXY':
         return ProxyService.sendMessage(message);
       default:
