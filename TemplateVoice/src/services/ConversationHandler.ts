@@ -11,7 +11,11 @@ class ConversationHandler {
     private messages: Message[] = [];
     private listeners: Array<(messages: Message[]) => void> = [];
 
-    private constructor() { }
+    private constructor() {
+        // Initialize the ApiRouter when the handler is first created
+        ApiRouter.initialise();
+    }
+
 
     // Singleton Instance
     public static getInstance(): ConversationHandler {
@@ -35,7 +39,9 @@ class ConversationHandler {
         this.addMessage(userMessage);
     
         try {
+            console.log(input)
             const response = await ApiRouter.sendMessage(input); // Fetch response
+            console.log(response)
             const agentMessage: Message = { id: Date.now().toString(), type: 'agent', text: response };
             this.addMessage(agentMessage);
     

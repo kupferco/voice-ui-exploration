@@ -14,6 +14,8 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 // Dynamically set the initial route
 const DEV_INITIAL_ROUTE = process.env.NODE_ENV === 'development' ? ENV_ROUTE : null;
+console.log(ENV_ROUTE)
+// const DEV_INITIAL_ROUTE = "Chat";
 
 console.log('DEV_INITIAL_ROUTE:', DEV_INITIAL_ROUTE);
 

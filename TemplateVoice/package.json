@@ -17,7 +17,7 @@
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.0",
     "expo-status-bar": "~2.0.0",
-    "proxy-assistant-sdk": "file:../../proxy-assistant-sdk/proxy-assistant-sdk-1.0.0.tgz",
+    "proxy-assistant-sdk": "file:../../../proxy-assistant-sdk/proxy-assistant-sdk-1.0.0.tgz",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-native": "0.76.5",
