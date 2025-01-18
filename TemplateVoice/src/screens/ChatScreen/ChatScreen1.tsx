@@ -33,14 +33,17 @@ const ChatScreen1 = () => {
   const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
-    // Load existing messages from ConversationHandler on screen entry
-    const existingMessages = ConversationHandler.getMessages();
-    setMessages(
-      existingMessages.map((msg) => ({
-        ...msg,
-        animation: new Animated.Value(1), // Set initial animation state
-      }))
-    );
+    const getMessage = async () => {
+      // Load existing messages from ConversationHandler on screen entry
+      const existingMessages = await ConversationHandler.getMessages();
+      setMessages(
+        existingMessages.map((msg) => ({
+          ...msg,
+          animation: new Animated.Value(1), // Set initial animation state
+        }))
+      );
+    }
+    getMessage();
 
     // Subscribe to updates
     const updateMessages = (updatedMessages: any[]) => {

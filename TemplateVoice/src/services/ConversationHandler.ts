@@ -1,4 +1,5 @@
 import ApiRouter from './ApiRouter'; // Add this import
+import { ConversationService } from 'proxy-assistant-sdk';
 
 type Message = {
     id: string;
@@ -16,6 +17,21 @@ class ConversationHandler {
         ApiRouter.initialise();
     }
 
+    // Async initialization method
+    // public async initialize(): Promise<void> {
+    //     try {
+    //         const history = await ConversationService.fetchHistory();
+    //         console.log('Fetched history:', history);
+    //         this.messages = history.map((item: { role: string; text: any; }) => ({
+    //             id: Date.now().toString(), // Generate unique IDs for each message
+    //             type: item.role as 'user' | 'agent',
+    //             text: item.text,
+    //         }));
+    //         this.notifyListeners(); // Notify listeners about the loaded history
+    //     } catch (error) {
+    //         console.error('Failed to load conversation history:', error);
+    //     }
+    // }
 
     // Singleton Instance
     public static getInstance(): ConversationHandler {
@@ -37,25 +53,39 @@ class ConversationHandler {
     public async sendMessage(input: string): Promise<string> {
         const userMessage: Message = { id: Date.now().toString(), type: 'user', text: input };
         this.addMessage(userMessage);
-    
+
         try {
             const response = await ApiRouter.sendMessage(input); // Fetch response
             const agentMessage: Message = { id: Date.now().toString(), type: 'agent', text: response };
             this.addMessage(agentMessage);
-    
+
             return response; // Return the agent's response as a string
         } catch (error) {
             const errorMessage = 'Error: Could not process the request.';
             const agentMessage: Message = { id: Date.now().toString(), type: 'agent', text: errorMessage };
             this.addMessage(agentMessage);
-    
+
             return errorMessage; // Return the error message as a string
         }
     }
-    
+
 
     // Get All Messages
-    public getMessages(): Message[] {
+    public async getMessages(): Promise<Message[]> {
+        // public getMessages(): Message[] {
+        try {
+            const history = await ConversationService.fetchHistory();
+            // console.log('Fetched history:', history);
+            this.messages = history.map((item: { role: string; text: any; }) => ({
+                id: Date.now().toString(), // Generate unique IDs for each message
+                type: item.role as 'user' | 'agent',
+                text: item.text,
+            }));
+            this.notifyListeners(); // Notify listeners about the loaded history
+        } catch (error) {
+            console.error('Failed to load conversation history:', error);
+        }
+
         return this.messages;
     }
 
@@ -74,6 +104,7 @@ class ConversationHandler {
         this.listeners.forEach((callback) => callback(this.messages));
     }
 
+    // initialize(); 
 }
 
 export default ConversationHandler.getInstance();
