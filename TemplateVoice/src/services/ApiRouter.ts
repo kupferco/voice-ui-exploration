@@ -12,7 +12,6 @@ class ApiRouter {
   }
 
   static async sendMessage(message: string): Promise<string> {
-    console.log(API_SERVICE)
     switch (API_SERVICE) {
       case 'MOCK':
         return MockService.sendMessage(message);

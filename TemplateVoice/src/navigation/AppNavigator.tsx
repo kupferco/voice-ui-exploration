@@ -2,7 +2,10 @@ import React, { useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { RootStackParamList } from '../../types';
-import { DEV_INITIAL_ROUTE as ENV_ROUTE } from '@env';
+import { ENV_ROUTE, API_SERVICE } from '@env';
+
+console.log('ENV_ROUTE:', ENV_ROUTE);
+console.log('API_SERVICE:', API_SERVICE);
 
 // Import screens
 import HomeScreen1 from '../screens/HomeScreens/HomeScreen1';
@@ -14,10 +17,6 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 // Dynamically set the initial route
 const DEV_INITIAL_ROUTE = process.env.NODE_ENV === 'development' ? ENV_ROUTE : null;
-console.log(ENV_ROUTE)
-// const DEV_INITIAL_ROUTE = "Chat";
-
-console.log('DEV_INITIAL_ROUTE:', DEV_INITIAL_ROUTE);
 
 // Auto-Navigation Wrapper for HomeScreen1
 const AutoNavigationHomeScreen = ({ navigation }: any) => {

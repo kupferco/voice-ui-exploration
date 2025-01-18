@@ -39,9 +39,7 @@ class ConversationHandler {
         this.addMessage(userMessage);
     
         try {
-            console.log(input)
             const response = await ApiRouter.sendMessage(input); // Fetch response
-            console.log(response)
             const agentMessage: Message = { id: Date.now().toString(), type: 'agent', text: response };
             this.addMessage(agentMessage);
     

@@ -13,7 +13,6 @@ class ProxyService {
         try {
             // Ensure session is initialized
             const sessionId = SessionManager.getSessionId();
-            console.log(sessionId)
 
             // Use the GeminiService to send the message
             const response = await this.geminiService.sendRestMessage(sessionId, message);
