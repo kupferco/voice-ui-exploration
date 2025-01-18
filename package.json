@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "proxy-assistant-sdk": "file:../../proxy-assistant-sdk/proxy-assistant-sdk-1.0.0.tgz"
+  }
+}

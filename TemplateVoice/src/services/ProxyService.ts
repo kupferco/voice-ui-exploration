@@ -5,6 +5,7 @@ class ProxyService {
 
     // Ensure the configuration is initialized
     static initialiseConfig() {
+        // Config.setApiBaseUrl('http://localhost:8080');
         Config.setApiBaseUrl(Config.getApiBaseUrl());
         SessionManager.initializeSession();
     }
