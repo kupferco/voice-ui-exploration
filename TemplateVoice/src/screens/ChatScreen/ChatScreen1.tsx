@@ -11,7 +11,7 @@ import {
   Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { useNavigation, NavigationProp, useFocusEffect } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import TypingIndicator from '../../components/chat/TypingIndicator';
 import { RootStackParamList } from '../../../types';
@@ -32,37 +32,38 @@ const ChatScreen1 = () => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const [isTyping, setIsTyping] = useState(false);
 
-  useEffect(() => {
-    const getMessage = async () => {
-      // Load existing messages from ConversationHandler on screen entry
-      const existingMessages = await ConversationHandler.getMessages();
-      setMessages(
-        existingMessages.map((msg) => ({
-          ...msg,
-          animation: new Animated.Value(1), // Set initial animation state
-        }))
-      );
-    }
-    getMessage();
+  // Load messages whenever the screen gains focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadMessages = async () => {
+        const existingMessages = await ConversationHandler.getMessages();
+        setMessages(
+          existingMessages.map((msg) => ({
+            ...msg,
+            animation: new Animated.Value(1), // Set initial animation state
+          }))
+        );
+      };
 
-    // Subscribe to updates
-    const updateMessages = (updatedMessages: any[]) => {
-      setMessages(
-        updatedMessages.map((msg) => ({
-          ...msg,
-          animation: new Animated.Value(1),
-        }))
-      );
-    };
+      loadMessages();
 
-    ConversationHandler.subscribe(updateMessages);
+      // Subscribe to updates
+      const updateMessages = (updatedMessages: any[]) => {
+        setMessages(
+          updatedMessages.map((msg) => ({
+            ...msg,
+            animation: new Animated.Value(1),
+          }))
+        );
+      };
 
-    return () => {
-      ConversationHandler.unsubscribe(updateMessages); // Cleanup on unmount
-    };
-  }, []);
+      ConversationHandler.subscribe(updateMessages);
 
-
+      return () => {
+        ConversationHandler.unsubscribe(updateMessages); // Cleanup on screen blur
+      };
+    }, [])
+  );
 
   const sendMessage = async () => {
     if (input.trim() === '') return;
@@ -77,7 +78,6 @@ const ChatScreen1 = () => {
     await ConversationHandler.sendMessage(messageToSend);
     setIsTyping(false);
   };
-
 
   return (
     <SafeAreaView style={styles.safeContainer}>
@@ -100,7 +100,7 @@ const ChatScreen1 = () => {
                 >
                   <Text style={styles.chatText}>{item.text}</Text>
                 </Animated.View>
-              )
+              );
             }}
             contentContainerStyle={styles.chatContainer}
             inverted

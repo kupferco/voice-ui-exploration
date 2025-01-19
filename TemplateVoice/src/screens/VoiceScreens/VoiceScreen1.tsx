@@ -1,65 +1,82 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import VoiceService from '../../services/VoiceService';
+
+interface ConversationMessage {
+  role: string;
+  text: string;
+}
 
 const VoiceScreen1 = () => {
   const [transcript, setTranscript] = useState('');
   const [isTTSPlaying, setIsTTSPlaying] = useState(false);
-  const [conversationHistory, setConversationHistory] = useState<{ role: string; text: string }[]>([]);
-
-
-  useEffect(() => {
-    const loadHistory = async () => {
-      const history = await VoiceService.fetchConversationHistory();
-      setConversationHistory(history);
-    };
-    loadHistory();
-  }, []);
+  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [isMuted, setIsMuted] = useState(false); // Track mute state
 
   const handleSpeechResult = (text: string) => {
     console.log('Speech Recognition Transcript:', text);
     setTranscript(text);
   };
 
-  const handleStartListening = async () => {
-    await VoiceService.startListening(handleSpeechResult);
-    setIsTTSPlaying(true);
+  const handleInterrupt = useCallback(() => {
+    console.log('Interrupting speech...');
+    VoiceService.interruptAudio(); // Call the interrupt method
+    setIsTTSPlaying(false); // Optionally update state if speech is interrupted
+  }, []);
+
+  const handleMuteToggle = () => {
+    if (isMuted) {
+      VoiceService.unmute();
+      console.log('Microphone unmuted.');
+    } else {
+      VoiceService.mute();
+      console.log('Microphone muted.');
+    }
+    setIsMuted((prev) => !prev); // Toggle mute state
   };
 
-  const handleStopListening = () => {
-    VoiceService.stopListening();
-    setIsTTSPlaying(false);
-  };
+  useFocusEffect(
+    useCallback(() => {
+      const loadHistory = async () => {
+        try {
+          const history: ConversationMessage[] = await VoiceService.fetchConversationHistory();
+          setConversationHistory(history);
+        } catch (error) {
+          console.error('Error loading conversation history:', error);
+        }
+      };
 
-  const handlePlayTTS = async () => {
-    const audioBlob = new Blob(['Sample audio content'], { type: 'audio/wav' });
-    await VoiceService.playTTS(audioBlob);
-  };
+      const startListening = async () => {
+        await VoiceService.startListening(handleSpeechResult);
+        setIsTTSPlaying(true);
+      };
+
+      loadHistory();
+      startListening();
+
+      return () => {
+        console.log('Cleaning up resources...');
+        VoiceService.stopListening(); // Stop listening on cleanup
+        setIsTTSPlaying(false); // Reset state
+        handleInterrupt();
+        VoiceService.unmute();
+      };
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Voice Input</Text>
       <Text style={styles.transcript}>{transcript || 'Say something...'}</Text>
 
-      <TouchableOpacity style={styles.button} onPress={handleStartListening}>
-        <Text style={styles.buttonText}>
-          {isTTSPlaying ? 'Stop Listening' : 'Start Listening'}
-        </Text>
+      {/* Mute/Unmute Button */}
+      <TouchableOpacity style={styles.button} onPress={handleMuteToggle}>
+        <Text style={styles.buttonText}>{isMuted ? 'Unmute' : 'Mute'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleStopListening}>
-        <Text style={styles.buttonText}>Stop Listening</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={VoiceService.mute}>
-        <Text style={styles.buttonText}>Mute</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={VoiceService.unmute}>
-        <Text style={styles.buttonText}>Unmute</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={VoiceService.interruptAudio}>
+      {/* Interrupt Button */}
+      <TouchableOpacity style={styles.button} onPress={handleInterrupt}>
         <Text style={styles.buttonText}>Interrupt</Text>
       </TouchableOpacity>
     </View>

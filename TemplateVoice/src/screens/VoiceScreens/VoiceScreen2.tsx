@@ -1,81 +1,99 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import MicHandler from '../../components/voice/MicHandler';
-import TTSHandler, { TTSHandlerRef } from '../../components/voice/GoogleTTSHandler';
-import ConversationHandler from '../../services/ConversationHandler';
+import React, { useCallback, useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import VoiceService from '../../services/VoiceService';
+
+interface ConversationMessage {
+  role: string;
+  text: string;
+}
 
 const VoiceScreen2 = () => {
-  const [recognizedText, setRecognizedText] = useState('');
-  const [isMuted, setIsMuted] = useState(false);
-  const [responseText, setResponseText] = useState('');
-  const ttsRef = useRef<TTSHandlerRef>(null);
+  const [transcript, setTranscript] = useState('');
+  const [isTTSPlaying, setIsTTSPlaying] = useState(false);
+  const [conversationHistory, setConversationHistory] = useState<ConversationMessage[]>([]);
+  const [isMuted, setIsMuted] = useState(false); // Track mute state
 
   const handleSpeechResult = (text: string) => {
-    setRecognizedText(text);
-    ConversationHandler.sendMessage(text);
-    if (ttsRef.current) ttsRef.current.interruptPlayback(); // Interrupt playback if user speaks
+    console.log('Speech Recognition Transcript:', text);
+    setTranscript(text);
   };
 
-  useEffect(() => {
-    const updateMessages = (messages: any[]) => {
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage && lastMessage.type === 'agent') {
-        setResponseText(lastMessage.text);
-      }
-    };
-
-    ConversationHandler.subscribe(updateMessages);
-    return () => ConversationHandler.unsubscribe(updateMessages);
+  const handleInterrupt = useCallback(() => {
+    console.log('Interrupting speech...');
+    VoiceService.interruptAudio(); // Call the interrupt method
+    setIsTTSPlaying(false); // Optionally update state if speech is interrupted
   }, []);
 
-  const toggleMute = () => setIsMuted((prevState) => !prevState);
-
-  const interruptTTS = () => {
-    if (ttsRef.current) ttsRef.current.interruptPlayback();
+  const handleMuteToggle = () => {
+    if (isMuted) {
+      VoiceService.unmute();
+      console.log('Microphone unmuted.');
+    } else {
+      VoiceService.mute();
+      console.log('Microphone muted.');
+    }
+    setIsMuted((prev) => !prev); // Toggle mute state
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadHistory = async () => {
+        try {
+          const history: ConversationMessage[] = await VoiceService.fetchConversationHistory();
+          setConversationHistory(history);
+        } catch (error) {
+          console.error('Error loading conversation history:', error);
+        }
+      };
+
+      const startListening = async () => {
+        await VoiceService.startListening(handleSpeechResult);
+        setIsTTSPlaying(true);
+      };
+
+      loadHistory();
+      startListening();
+
+      return () => {
+        console.log('Cleaning up resources...');
+        VoiceService.stopListening(); // Stop listening on cleanup
+        setIsTTSPlaying(false); // Reset state
+        handleInterrupt();
+        VoiceService.unmute();
+      };
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Voice Mode</Text>
-      <Text style={styles.status}>{isMuted ? 'Muted' : 'Listening...'}</Text>
-      <Text style={styles.recognizedText}>{recognizedText || 'Say something...'}</Text>
-
-      {/* TTSHandler */}
-      <TTSHandler ref={ttsRef} text={responseText} isEnabled={!isMuted} />
-
-      <MicHandler onSpeechResult={handleSpeechResult} isMuted={isMuted} />
+      <Text style={styles.title}>Voice Input</Text>
+      <Text style={styles.transcript}>{transcript || 'Say something...'}</Text>
 
       {/* Mute/Unmute Button */}
-      <TouchableOpacity style={styles.muteButton} onPress={toggleMute}>
-        <Icon name={isMuted ? 'mic-off' : 'mic'} size={30} color="#fff" />
+      <TouchableOpacity style={styles.button} onPress={handleMuteToggle}>
         <Text style={styles.buttonText}>{isMuted ? 'Unmute' : 'Mute'}</Text>
       </TouchableOpacity>
 
-      {/* Interrupt TTS Button */}
-      <TouchableOpacity style={styles.muteButton} onPress={interruptTTS}>
-        <Icon name="stop" size={30} color="#fff" />
-        <Text style={styles.buttonText}>Stop Playback</Text>
+      {/* Interrupt Button */}
+      <TouchableOpacity style={styles.button} onPress={handleInterrupt}>
+        <Text style={styles.buttonText}>Interrupt</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 10 },
-  status: { fontSize: 18, marginBottom: 10, color: '#555' },
-  recognizedText: { fontSize: 18, color: '#333', paddingHorizontal: 20, marginBottom: 20 },
-  muteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  title: { fontSize: 24, marginBottom: 20 },
+  transcript: { fontSize: 18, marginBottom: 20, color: 'gray' },
+  button: {
     backgroundColor: '#007AFF',
     padding: 12,
     borderRadius: 8,
-    marginTop: 10,
+    marginBottom: 10,
   },
-  buttonText: { marginLeft: 10, fontSize: 18, color: '#fff' },
+  buttonText: { color: '#fff', fontSize: 18 },
 });
 
 export default VoiceScreen2;
